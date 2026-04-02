@@ -11,6 +11,7 @@ export default function Wardrobe() {
   const [selectedOutfit, setSelectedOutfit] = useState<Outfit | null>(null);
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { user, isDemo } = useAuth();
 
   useEffect(() => {
@@ -44,19 +45,26 @@ export default function Wardrobe() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user || !confirm('Are you sure you want to delete this outfit?')) return;
+    if (!user) return;
+    setDeletingId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingId) return;
     try {
       if (isDemo) {
         const saved = JSON.parse(localStorage.getItem('styleai_demo_outfits') || '[]');
-        const updated = saved.filter((o: any) => o.id !== id);
+        const updated = saved.filter((o: any) => o.id !== deletingId);
         localStorage.setItem('styleai_demo_outfits', JSON.stringify(updated));
         setOutfits(updated);
       } else {
-        await deleteDoc(doc(db, 'outfits', id));
+        await deleteDoc(doc(db, 'outfits', deletingId));
       }
-      if (selectedOutfit?.id === id) setSelectedOutfit(null);
+      if (selectedOutfit?.id === deletingId) setSelectedOutfit(null);
+      setDeletingId(null);
     } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `outfits/${id}`);
+      handleFirestoreError(err, OperationType.DELETE, `outfits/${deletingId}`);
+      setDeletingId(null);
     }
   };
 
@@ -154,6 +162,38 @@ export default function Wardrobe() {
       )}
 
       <AnimatePresence>
+        {deletingId && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white p-8 rounded-[2rem] max-w-sm w-full shadow-2xl"
+            >
+              <h3 className="text-2xl font-serif font-bold mb-4">Delete Outfit?</h3>
+              <p className="text-gray-500 mb-8">Are you sure you want to delete this outfit from your wardrobe? This action cannot be undone.</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setDeletingId(null)}
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmDelete}
+                  className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         {selectedOutfit && (
           <motion.div
             initial={{ opacity: 0 }}

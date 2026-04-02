@@ -9,6 +9,7 @@ export default function Settings() {
   const [darkMode, setDarkMode] = useState(false);
   const [displayName, setDisplayName] = useState(userProfile?.displayName || '');
   const [saved, setSaved] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -76,9 +77,12 @@ export default function Settings() {
   };
 
   const handleDeleteAccount = () => {
-    if (confirm('Are you sure you want to delete your account? This action is permanent.')) {
-      logout();
-    }
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAccount = () => {
+    logout();
+    setShowDeleteModal(false);
   };
 
   return (
@@ -173,17 +177,36 @@ export default function Settings() {
             <AlertCircle className="w-5 h-5 mr-2" /> Danger Zone
           </h2>
           <button
-            onClick={() => {
-              if (confirm('Are you sure you want to delete your account? This action is permanent.')) {
-                logout();
-              }
-            }}
+            onClick={handleDeleteAccount}
             className="w-full p-4 bg-white border border-red-200 text-red-600 rounded-2xl font-bold flex items-center justify-center hover:bg-red-50 transition-all shadow-sm"
           >
             <Trash2 className="mr-2 w-5 h-5" /> Delete Account
           </button>
         </section>
       </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-8 rounded-[2rem] max-w-sm w-full shadow-2xl">
+            <h3 className="text-2xl font-serif font-bold mb-4">Delete Account?</h3>
+            <p className="text-gray-500 mb-8">Are you sure you want to delete your account? This action is permanent and all your data will be lost.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDeleteAccount}
+                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

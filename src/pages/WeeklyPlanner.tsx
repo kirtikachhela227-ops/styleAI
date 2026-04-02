@@ -3,13 +3,15 @@ import { useAuth } from '../context/AuthContext';
 import { generateWeeklyPlan } from '../services/gemini';
 import { Outfit, WeeklyPlan } from '../types';
 import { db, collection, addDoc, query, where, onSnapshot, deleteDoc, doc, handleFirestoreError, OperationType } from '../firebase';
-import { Calendar, Sparkles, Save, RefreshCw, ChevronRight, X, Shirt, Plus, Download } from 'lucide-react';
+import { Calendar, Sparkles, Save, RefreshCw, ChevronRight, X, Shirt, Plus, Download, AlertCircle, Check } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function WeeklyPlanner() {
   const [loading, setLoading] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<{ [day: string]: Outfit } | null>(null);
   const [savedPlans, setSavedPlans] = useState<WeeklyPlan[]>([]);
+  const [success, setSuccess] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [tripType, setTripType] = useState('Work Week');
   const [context, setContext] = useState('Work week in Mumbai, humid weather, formal meetings');
   const [error, setError] = useState('');
@@ -73,25 +75,33 @@ export default function WeeklyPlanner() {
         await addDoc(collection(db, 'weeklyPlans'), newPlan);
       }
       setCurrentPlan(null);
-      alert('Weekly plan saved successfully!');
+      setSuccess('Weekly plan saved successfully!');
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, 'weeklyPlans');
     }
   };
 
   const handleDeletePlan = async (id: string) => {
-    if (!user || !confirm('Are you sure you want to delete this plan?')) return;
+    if (!user) return;
+    setDeletingId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingId) return;
     try {
       if (isDemo) {
         const saved = JSON.parse(localStorage.getItem('styleai_demo_plans') || '[]');
-        const updated = saved.filter((p: any) => p.id !== id);
+        const updated = saved.filter((p: any) => p.id !== deletingId);
         localStorage.setItem('styleai_demo_plans', JSON.stringify(updated));
         setSavedPlans(updated);
       } else {
-        await deleteDoc(doc(db, 'weeklyPlans', id));
+        await deleteDoc(doc(db, 'weeklyPlans', deletingId));
       }
+      setDeletingId(null);
     } catch (err) {
-      handleFirestoreError(err, OperationType.DELETE, `weeklyPlans/${id}`);
+      handleFirestoreError(err, OperationType.DELETE, `weeklyPlans/${deletingId}`);
+      setDeletingId(null);
     }
   };
 
@@ -275,8 +285,37 @@ export default function WeeklyPlanner() {
       )}
 
       {error && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100">
-          {error}
+        <div className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center">
+          <AlertCircle className="w-5 h-5 mr-2" /> {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="fixed bottom-8 right-8 p-4 bg-green-500 text-white rounded-2xl shadow-2xl flex items-center z-50 animate-bounce">
+          <Check className="w-5 h-5 mr-2" /> {success}
+        </div>
+      )}
+
+      {deletingId && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-8 rounded-[2rem] max-w-sm w-full shadow-2xl">
+            <h3 className="text-2xl font-serif font-bold mb-4">Delete Plan?</h3>
+            <p className="text-gray-500 mb-8">Are you sure you want to delete this weekly plan? This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setDeletingId(null)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

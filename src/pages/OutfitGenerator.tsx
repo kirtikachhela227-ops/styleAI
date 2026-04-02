@@ -10,6 +10,7 @@ export default function OutfitGenerator() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Outfit | null>(null);
   const [saved, setSaved] = useState(false);
+  const [shared, setShared] = useState(false);
   const [error, setError] = useState('');
   const { user, isDemo } = useAuth();
   
@@ -71,7 +72,8 @@ export default function OutfitGenerator() {
     if (!result) return;
     const text = `Check out this outfit StyleAI generated for me: ${result.outfitName} for ${result.occasion}!\n\nTop: ${result.pieces.top}\nBottom: ${result.pieces.bottom}\nShoes: ${result.pieces.shoes}\n\nStyling Tip: ${result.stylingTip}`;
     navigator.clipboard.writeText(text);
-    alert('Outfit details copied to clipboard!');
+    setShared(true);
+    setTimeout(() => setShared(false), 3000);
   };
 
   return (
@@ -228,10 +230,10 @@ export default function OutfitGenerator() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleShare}
-                    className="p-3 bg-white/10 rounded-2xl hover:bg-white/20 transition-all"
+                    className={`p-3 rounded-2xl transition-all flex items-center ${shared ? 'bg-green-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
                     title="Share"
                   >
-                    <Share2 className="w-5 h-5" />
+                    {shared ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
                   </button>
                   <button
                     onClick={handleSave}
