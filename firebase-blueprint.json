@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information and preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string", "format": "uri" },
+        "stylePersona": { "type": "string" },
+        "bodyType": { "type": "string" },
+        "budgetTier": { "type": "string" },
+        "gender": { "type": "string" },
+        "colorPreferences": { "type": "array", "items": { "type": "string" } },
+        "darkMode": { "type": "boolean" }
+      },
+      "required": ["uid", "displayName", "email"]
+    },
+    "Outfit": {
+      "title": "Outfit",
+      "description": "A curated outfit recommendation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "outfitName": { "type": "string" },
+        "occasion": { "type": "string" },
+        "pieces": {
+          "type": "object",
+          "properties": {
+            "top": { "type": "string" },
+            "bottom": { "type": "string" },
+            "shoes": { "type": "string" },
+            "bag": { "type": "string" },
+            "accessories": { "type": "string" },
+            "outerwear": { "type": "string" }
+          },
+          "required": ["top", "bottom", "shoes", "bag", "accessories"]
+        },
+        "colorPalette": { "type": "array", "items": { "type": "string" } },
+        "stylingTip": { "type": "string" },
+        "budgetRange": { "type": "string" },
+        "shopAt": { "type": "array", "items": { "type": "string" } },
+        "season": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "rating": { "type": "number" },
+        "uid": { "type": "string" }
+      },
+      "required": ["outfitName", "occasion", "pieces", "colorPalette", "stylingTip", "budgetRange", "shopAt", "season", "uid"]
+    },
+    "WeeklyPlan": {
+      "title": "WeeklyPlan",
+      "description": "A 7-day outfit plan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "context": { "type": "string" },
+        "outfits": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "uid": { "type": "string" }
+      },
+      "required": ["title", "context", "outfits", "uid"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document"
+    },
+    "/outfits/{outfitId}": {
+      "schema": "Outfit",
+      "description": "Saved outfit recommendations"
+    },
+    "/weeklyPlans/{planId}": {
+      "schema": "WeeklyPlan",
+      "description": "Saved weekly outfit plans"
+    }
+  }
+}

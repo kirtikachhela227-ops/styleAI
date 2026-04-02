@@ -1,0 +1,152 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (matches auth.uid)
+    // Fields:
+    //   - uid: string (required)
+    //   - displayName: string (required)
+    //   - email: string (required, format: email)
+    //   - photoURL: string (optional, format: uri)
+    //   - stylePersona: string (optional)
+    //   - bodyType: string (optional)
+    //   - budgetTier: string (optional)
+    //   - gender: string (optional)
+    //   - colorPreferences: list (optional)
+    //   - darkMode: bool (optional)
+    //
+    // Collection: outfits
+    // Document ID: {outfitId}
+    // Fields:
+    //   - outfitName: string (required)
+    //   - occasion: string (required)
+    //   - pieces: map (required)
+    //   - colorPalette: list (required)
+    //   - stylingTip: string (required)
+    //   - budgetRange: string (required)
+    //   - shopAt: list (required)
+    //   - season: string (required)
+    //   - uid: string (required, matches auth.uid)
+    //   - createdAt: string (required, format: date-time)
+    //   - rating: number (optional)
+    //
+    // Collection: weeklyPlans
+    // Document ID: {planId}
+    // Fields:
+    //   - title: string (required)
+    //   - context: string (required)
+    //   - outfits: map (required)
+    //   - uid: string (required, matches auth.uid)
+    //   - createdAt: string (required, format: date-time)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return data.keys().hasOnly(['uid', 'displayName', 'email', 'photoURL', 'stylePersona', 'bodyType', 'budgetTier', 'gender', 'colorPreferences', 'darkMode']) &&
+             data.keys().hasAll(['uid', 'displayName', 'email']) &&
+             data.uid == request.auth.uid &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() < 100 &&
+             isValidEmail(data.email) &&
+             (!('photoURL' in data) || isValidUrl(data.photoURL)) &&
+             (!('darkMode' in data) || data.darkMode is bool);
+    }
+
+    function isValidOutfit(data) {
+      return data.keys().hasOnly(['id', 'outfitName', 'occasion', 'pieces', 'colorPalette', 'stylingTip', 'budgetRange', 'shopAt', 'season', 'uid', 'createdAt', 'rating']) &&
+             data.keys().hasAll(['outfitName', 'occasion', 'pieces', 'colorPalette', 'stylingTip', 'budgetRange', 'shopAt', 'season', 'uid', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.outfitName is string && data.outfitName.size() > 0 && data.outfitName.size() < 200 &&
+             data.pieces is map &&
+             data.colorPalette is list &&
+             data.stylingTip is string && data.stylingTip.size() < 1000 &&
+             isValidDateString(data.createdAt);
+    }
+
+    function isValidWeeklyPlan(data) {
+      return data.keys().hasOnly(['id', 'title', 'context', 'outfits', 'uid', 'createdAt']) &&
+             data.keys().hasAll(['title', 'context', 'outfits', 'uid', 'createdAt']) &&
+             data.uid == request.auth.uid &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.outfits is map &&
+             isValidDateString(data.createdAt);
+    }
+
+    function createdAtUnchanged() {
+      return !('createdAt' in request.resource.data) || request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified();
+      allow delete: if isOwner(userId);
+    }
+
+    match /outfits/{outfitId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid);
+      allow create: if isAuthenticated() && isValidOutfit(request.resource.data);
+      allow update: if isDocOwner() && isValidOutfit(request.resource.data) && uidNotModified() && createdAtUnchanged();
+      allow delete: if isDocOwner();
+    }
+
+    match /weeklyPlans/{planId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid);
+      allow create: if isAuthenticated() && isValidWeeklyPlan(request.resource.data);
+      allow update: if isDocOwner() && isValidWeeklyPlan(request.resource.data) && uidNotModified() && createdAtUnchanged();
+      allow delete: if isDocOwner();
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
