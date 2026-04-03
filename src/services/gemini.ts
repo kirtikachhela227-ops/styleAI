@@ -82,36 +82,39 @@ export async function generateOutfit(params: {
         model: "gemini-3.1-flash-image-preview",
         contents: {
           parts: [{ 
-            text: `You are an AI fashion stylist and image generator.
-            Generate a realistic full-body outfit image based strictly on the following user inputs:
-            Occasion: ${params.occasion}
-            Style Persona: ${params.stylePersona}
-            Body Type: ${params.bodyType || "standard"}
-            Budget: ${params.budgetTier}
-            Gender: ${params.gender}
-            Season: ${params.season}
-            Color Preference: ${params.colorPreferences.join(", ")}
-            Outfit Details: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}, ${outfit.pieces.accessories}.
+            text: `You are a professional AI fashion stylist. You MUST strictly follow ALL user inputs. Do NOT ignore any parameter.
 
-            Instructions:
-            - Create a complete outfit (top, bottom, footwear, accessories).
-            - Ensure the outfit matches the OCCASION appropriately.
-            - Reflect the STYLE PERSONA in silhouette, fabrics, and overall aesthetic.
-            - Adapt the outfit to flatter the given BODY TYPE.
-            - Respect the BUDGET:
-              - Low budget → simple fabrics, minimal accessories
-              - Mid-range → balanced styling
-              - Luxe → premium fabrics, detailed styling, statement pieces
-            - Match the SEASON (fabric, layering, colors).
-            - Strictly follow the COLOR PREFERENCE in the outfit.
+            User Inputs:
+            - Occasion: ${params.occasion}
+            - Style Persona: ${params.stylePersona}
+            - Body Type: ${params.bodyType || "standard"}
+            - Budget: ${params.budgetTier}
+            - Gender: ${params.gender}
+            - Season: ${params.season}
+            - Color Palette: ${params.colorPreferences.join(", ")}
+            - Specific Outfit: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}, ${outfit.pieces.accessories}
 
-            Output Requirements:
-            - Generate a highly realistic, full-body fashion model image.
-            - Clean background (studio or relevant to occasion).
-            - Model pose should clearly show the outfit.
-            - Include accurate textures (cotton, silk, denim, etc.).
-            - Ensure modern, trendy, and wearable styling.
-            - STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.` 
+            Task:
+            Generate a realistic full-body outfit image that clearly reflects ALL inputs combined.
+
+            Rules (MANDATORY):
+            1. Occasion must control the outfit type (e.g., wedding = ethnic/formal, gym = activewear, beach = relaxed).
+            2. Style Persona must strongly influence the aesthetic.
+            3. Body Type must affect fit and silhouette.
+            4. Budget must affect quality.
+            5. Season must affect fabric and layering.
+            6. Color palette must dominate the outfit visually.
+
+            Output Instructions:
+            - Show a single full-body model.
+            - Outfit must include clothing, footwear, and accessories.
+            - Use realistic textures and modern fashion trends.
+            - Background should match occasion (e.g., beach, wedding venue, city street, professional office, gym).
+            - Ensure the differences are clearly visible when inputs change.
+            - STRICTLY FORBIDDEN: No food, no animals, no statues, no random objects, no scenery without a fashion model.
+
+            Final Check (IMPORTANT):
+            Internally verify that EVERY input is reflected in the outfit. If any input is missing, regenerate. Do NOT produce generic outfits. Each result must be unique to the inputs.` 
           }]
         },
         config: {
@@ -131,17 +134,14 @@ export async function generateOutfit(params: {
     } catch (imageError: any) {
       console.error("Failed to generate AI image:", imageError);
       
-      // Handle Quota Exceeded or other errors with a dynamic keyword-based fallback
-      const keywords = [
-        params.gender,
-        params.occasion,
-        params.stylePersona,
-        "fashion",
-        "outfit"
-      ].map(k => k.toLowerCase().replace(/\s+/g, '')).join(',');
-      
-      // Use LoremFlickr for keyword-based dynamic fashion images when AI quota is hit
-      outfit.imageUrl = `https://loremflickr.com/800/1200/${keywords}/all`;
+      // Use a high-quality static fashion placeholder when AI quota is hit
+      // This ensures the user NEVER sees an irrelevant image like a cat or scenery
+      const fashionFallbacks = [
+        "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=800&q=80"
+      ];
+      outfit.imageUrl = fashionFallbacks[Math.floor(Math.random() * fashionFallbacks.length)];
     }
     
     return outfit;
@@ -241,28 +241,34 @@ export async function generateWeeklyPlan(params: {
             model: "gemini-3.1-flash-image-preview",
             contents: {
               parts: [{ 
-                text: `You are an AI fashion stylist and image generator.
-                Generate a realistic full-body outfit image based strictly on the following user inputs:
-                Occasion: ${outfit.occasion}
-                Outfit Name: ${outfit.outfitName}
-                Outfit Details: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}, ${outfit.pieces.accessories}.
-                Season: ${outfit.season}
-                Color Palette: ${outfit.colorPalette.join(", ")}
+                text: `You are a professional AI fashion stylist. You MUST strictly follow ALL user inputs. Do NOT ignore any parameter.
 
-                Instructions:
-                - Create a complete outfit (top, bottom, footwear, accessories).
-                - Ensure the outfit matches the OCCASION appropriately.
-                - Reflect the STYLE PERSONA in silhouette, fabrics, and overall aesthetic.
-                - Match the SEASON (fabric, layering, colors).
-                - Strictly follow the COLOR PALETTE in the outfit.
+                User Inputs:
+                - Occasion: ${outfit.occasion}
+                - Outfit Name: ${outfit.outfitName}
+                - Specific Outfit: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}, ${outfit.pieces.accessories}
+                - Season: ${outfit.season}
+                - Color Palette: ${outfit.colorPalette.join(", ")}
 
-                Output Requirements:
-                - Generate a highly realistic, full-body fashion model image.
-                - Clean background (studio or relevant to occasion).
-                - Model pose should clearly show the outfit.
-                - Include accurate textures (cotton, silk, denim, etc.).
-                - Ensure modern, trendy, and wearable styling.
-                - STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.` 
+                Task:
+                Generate a realistic full-body outfit image that clearly reflects ALL inputs combined.
+
+                Rules (MANDATORY):
+                1. Occasion must control the outfit type (e.g., wedding = ethnic/formal, gym = activewear, beach = relaxed).
+                2. Style Persona must strongly influence the aesthetic.
+                3. Season must affect fabric and layering (summer = light, winter = layered).
+                4. Color palette must dominate the outfit visually.
+
+                Output Instructions:
+                - Show a single full-body model.
+                - Outfit must include clothing, footwear, and accessories.
+                - Use realistic textures and modern fashion trends.
+                - Background should match occasion (e.g., beach, wedding venue, city street, professional office, gym).
+                - Ensure the differences are clearly visible when inputs change.
+                - STRICTLY FORBIDDEN: No food images.
+
+                Final Check (IMPORTANT):
+                Internally verify that EVERY input is reflected in the outfit. If any input is missing, regenerate. Do NOT produce generic outfits. Each result must be unique to the inputs.` 
               }]
             },
             config: {
@@ -282,15 +288,14 @@ export async function generateWeeklyPlan(params: {
         } catch (imageError: any) {
           console.error(`Failed to generate AI image for ${day}:`, imageError);
           
-          // Handle Quota Exceeded or other errors with a dynamic keyword-based fallback
-          const keywords = [
-            outfit.occasion,
-            "fashion",
-            "outfit"
-          ].map(k => k.toLowerCase().replace(/\s+/g, '')).join(',');
-          
-          // Use LoremFlickr for keyword-based dynamic fashion images when AI quota is hit
-          outfit.imageUrl = `https://loremflickr.com/800/1200/${keywords}/all`;
+          // Use a high-quality static fashion placeholder when AI quota is hit
+          // This ensures the user NEVER sees an irrelevant image like a cat or scenery
+          const fashionFallbacks = [
+            "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=800&q=80"
+          ];
+          outfit.imageUrl = fashionFallbacks[Math.floor(Math.random() * fashionFallbacks.length)];
         }
       }
     });
