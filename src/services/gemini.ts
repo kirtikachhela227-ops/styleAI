@@ -24,82 +24,84 @@ export async function generateOutfit(params: {
   
   Provide a creative title, complete look (top, bottom, shoes, bag, accessories, outerwear), color palette (hex codes), styling tip, budget range in ₹, and suggested Indian shopping platforms (Myntra, Ajio, Nykaa Fashion, Meesho, Zara India).`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          outfitName: { type: Type.STRING },
-          occasion: { type: Type.STRING },
-          pieces: {
-            type: Type.OBJECT,
-            properties: {
-              top: { type: Type.STRING },
-              bottom: { type: Type.STRING },
-              shoes: { type: Type.STRING },
-              bag: { type: Type.STRING },
-              accessories: { type: Type.STRING },
-              outerwear: { type: Type.STRING },
-            },
-            required: ["top", "bottom", "shoes", "bag", "accessories"],
-          },
-          colorPalette: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING },
-          },
-          stylingTip: { type: Type.STRING },
-          budgetRange: { type: Type.STRING },
-          shopAt: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING },
-          },
-          season: { type: Type.STRING },
-        },
-        required: ["outfitName", "occasion", "pieces", "colorPalette", "stylingTip", "budgetRange", "shopAt", "season"],
-      },
-    },
-  });
-
-  const outfit = JSON.parse(response.text || "{}") as Outfit;
-  
-  // Generate a highly relevant fashion image using Gemini Image model
   try {
-    const imageResponse = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image",
-      contents: {
-        parts: [
-          {
-            text: `A professional fashion photography shot of a ${params.gender} wearing a ${outfit.outfitName}. 
-            The outfit consists of: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}, and ${outfit.pieces.accessories}. 
-            Style: ${params.stylePersona}. Occasion: ${params.occasion}. Season: ${params.season}.
-            The background should be appropriate for the occasion. High quality, editorial style.`,
-          },
-        ],
-      },
+    const response = await ai.models.generateContent({
+      model: "gemini-flash-latest",
+      contents: [{ parts: [{ text: prompt }] }],
       config: {
-        imageConfig: {
-          aspectRatio: "3:4",
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            outfitName: { type: Type.STRING },
+            occasion: { type: Type.STRING },
+            pieces: {
+              type: Type.OBJECT,
+              properties: {
+                top: { type: Type.STRING },
+                bottom: { type: Type.STRING },
+                shoes: { type: Type.STRING },
+                bag: { type: Type.STRING },
+                accessories: { type: Type.STRING },
+                outerwear: { type: Type.STRING },
+              },
+              required: ["top", "bottom", "shoes", "bag", "accessories"],
+            },
+            colorPalette: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+            },
+            stylingTip: { type: Type.STRING },
+            budgetRange: { type: Type.STRING },
+            shopAt: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+            },
+            season: { type: Type.STRING },
+          },
+          required: ["outfitName", "occasion", "pieces", "colorPalette", "stylingTip", "budgetRange", "shopAt", "season"],
         },
       },
     });
 
-    for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        outfit.imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        break;
+    const outfit = JSON.parse(response.text || "{}") as Outfit;
+    
+    // Generate a highly relevant fashion image using Gemini Image model
+    try {
+      const imageResponse = await ai.models.generateContent({
+        model: "gemini-2.5-flash-image",
+        contents: [{ 
+          parts: [{ 
+            text: `A professional fashion photography shot of a ${params.gender} wearing a ${outfit.outfitName}. 
+            The outfit consists of: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}. 
+            Style: ${params.stylePersona}. Occasion: ${params.occasion}. Season: ${params.season}.
+            High quality, editorial style.` 
+          }] 
+        }],
+        config: {
+          imageConfig: {
+            aspectRatio: "3:4",
+          },
+        },
+      });
+
+      for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) {
+          outfit.imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+          break;
+        }
       }
+    } catch (imageError) {
+      console.error("Failed to generate AI image:", imageError);
+      const seed = `${params.gender}-${params.occasion}-${outfit.outfitName}`.toLowerCase().replace(/\s+/g, '-');
+      outfit.imageUrl = `https://picsum.photos/seed/${encodeURIComponent(seed)}/800/1200`;
     }
-  } catch (imageError) {
-    console.error("Failed to generate AI image:", imageError);
-    // Fallback to picsum if AI image generation fails
-    const seed = `${params.gender}-${params.occasion}-${outfit.outfitName}`.toLowerCase().replace(/\s+/g, '-');
-    outfit.imageUrl = `https://picsum.photos/seed/${encodeURIComponent(seed)}/800/1200`;
+    
+    return outfit;
+  } catch (err) {
+    console.error("Error in generateOutfit:", err);
+    throw err;
   }
-  
-  return outfit;
 }
 
 export async function generateWeeklyPlan(params: {
@@ -142,66 +144,68 @@ export async function generateWeeklyPlan(params: {
     required: ["outfitName", "occasion", "pieces", "colorPalette", "stylingTip", "budgetRange", "shopAt", "season"],
   };
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          Monday: outfitSchema,
-          Tuesday: outfitSchema,
-          Wednesday: outfitSchema,
-          Thursday: outfitSchema,
-          Friday: outfitSchema,
-          Saturday: outfitSchema,
-          Sunday: outfitSchema,
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-flash-latest",
+      contents: [{ parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            Monday: outfitSchema,
+            Tuesday: outfitSchema,
+            Wednesday: outfitSchema,
+            Thursday: outfitSchema,
+            Friday: outfitSchema,
+            Saturday: outfitSchema,
+            Sunday: outfitSchema,
+          },
+          required: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
         },
-        required: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
       },
-    },
-  });
+    });
 
-  const plan = JSON.parse(response.text || "{}") as { [day: string]: Outfit };
-  
-  // Add relevant image URLs for each day using Gemini Image model
-  for (const day of Object.keys(plan)) {
-    const outfit = plan[day];
-    if (outfit && outfit.outfitName) {
-      try {
-        const imageResponse = await ai.models.generateContent({
-          model: "gemini-2.5-flash-image",
-          contents: {
-            parts: [
-              {
+    const plan = JSON.parse(response.text || "{}") as { [day: string]: Outfit };
+    
+    // Add relevant image URLs for each day in parallel to avoid timeouts
+    const imagePromises = Object.keys(plan).map(async (day) => {
+      const outfit = plan[day];
+      if (outfit && outfit.outfitName) {
+        try {
+          const imageResponse = await ai.models.generateContent({
+            model: "gemini-2.5-flash-image",
+            contents: [{ 
+              parts: [{ 
                 text: `A professional fashion photography shot of a person wearing a ${outfit.outfitName} for a ${outfit.occasion}. 
-                The outfit consists of: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}. 
-                High quality, editorial style, appropriate background for ${outfit.occasion}.`,
+                High quality, editorial style.` 
+              }] 
+            }],
+            config: {
+              imageConfig: {
+                aspectRatio: "3:4",
               },
-            ],
-          },
-          config: {
-            imageConfig: {
-              aspectRatio: "3:4",
             },
-          },
-        });
+          });
 
-        for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
-          if (part.inlineData) {
-            outfit.imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-            break;
+          for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
+            if (part.inlineData) {
+              outfit.imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+              break;
+            }
           }
+        } catch (imageError) {
+          console.error(`Failed to generate AI image for ${day}:`, imageError);
+          const seed = `outfit-${day}-${outfit.outfitName}`.toLowerCase().replace(/\s+/g, '-');
+          outfit.imageUrl = `https://picsum.photos/seed/${encodeURIComponent(seed)}/800/1200`;
         }
-      } catch (imageError) {
-        console.error(`Failed to generate AI image for ${day}:`, imageError);
-        // Fallback to picsum if AI image generation fails
-        const seed = `outfit-${day}-${outfit.outfitName}`.toLowerCase().replace(/\s+/g, '-');
-        outfit.imageUrl = `https://picsum.photos/seed/${encodeURIComponent(seed)}/800/1200`;
       }
-    }
+    });
+
+    await Promise.all(imagePromises);
+    return plan;
+  } catch (err) {
+    console.error("Error in generateWeeklyPlan:", err);
+    throw err;
   }
-  
-  return plan;
 }
