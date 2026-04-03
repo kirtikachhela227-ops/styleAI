@@ -48,8 +48,9 @@ export default function WeeklyPlanner() {
       const plan = await generateWeeklyPlan({ tripType, context });
       setCurrentPlan(plan);
     } catch (err: any) {
-      setError('Failed to generate plan. Please try again.');
-      console.error(err);
+      const errorMessage = err.message || 'Failed to generate plan. Please try again.';
+      setError(errorMessage);
+      console.error("Weekly plan generation error:", err);
     } finally {
       setLoading(false);
     }

@@ -1,9 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Outfit } from "../types";
 
-const apiKey = process.env.GEMINI_API_KEY;
-const ai = new GoogleGenAI({ apiKey: apiKey || "" });
-
 export async function generateOutfit(params: {
   occasion: string;
   stylePersona: string;
@@ -13,6 +10,13 @@ export async function generateOutfit(params: {
   season: string;
   colorPreferences: string[];
 }): Promise<Outfit> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not defined in the environment.");
+  }
+  
+  const ai = new GoogleGenAI({ apiKey });
+  
   const prompt = `Generate a complete, wearable outfit recommendation for a ${params.gender} for ${params.occasion}. 
   Style: ${params.stylePersona}. Body Type: ${params.bodyType || "Any"}. Budget: ${params.budgetTier}. Season: ${params.season}. Colors: ${params.colorPreferences.join(", ")}.
   
@@ -67,6 +71,7 @@ export async function generateOutfit(params: {
     });
 
     const text = response.text;
+    console.log("Gemini response text:", text);
     if (!text) throw new Error("No response text from Gemini");
     
     const outfit = JSON.parse(text) as Outfit;
@@ -113,6 +118,13 @@ export async function generateWeeklyPlan(params: {
   tripType: string;
   context: string;
 }): Promise<{ [day: string]: Outfit }> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not defined in the environment.");
+  }
+  
+  const ai = new GoogleGenAI({ apiKey });
+  
   const prompt = `Generate a 7-day weekly outfit plan (Mon-Sun) for: ${params.tripType}. Context: ${params.context}.
   For each day, provide a complete outfit including name, pieces, color palette (hex codes), styling tip, budget range, and shopping platforms.
   Ensure the outfits are varied and appropriate for the context.`;
@@ -172,6 +184,7 @@ export async function generateWeeklyPlan(params: {
     });
 
     const text = response.text;
+    console.log("Weekly plan response text:", text);
     if (!text) throw new Error("No response text from Gemini");
     
     const plan = JSON.parse(text) as { [day: string]: Outfit };

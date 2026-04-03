@@ -39,8 +39,9 @@ export default function OutfitGenerator() {
       const outfit = await generateOutfit(formData);
       setResult(outfit);
     } catch (err: any) {
-      setError('Failed to generate outfit. Please try again.');
-      console.error(err);
+      const errorMessage = err.message || 'Failed to generate outfit. Please try again.';
+      setError(errorMessage);
+      console.error("Outfit generation error:", err);
     } finally {
       setLoading(false);
     }
