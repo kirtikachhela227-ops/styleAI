@@ -76,19 +76,42 @@ export async function generateOutfit(params: {
     
     const outfit = JSON.parse(text) as Outfit;
     
-    // Generate a highly relevant fashion image using Gemini Image model
+    // Generate a highly realistic fashion image using Gemini Image model
     try {
       const imageResponse = await ai.models.generateContent({
         model: "gemini-3.1-flash-image-preview",
         contents: {
           parts: [{ 
-            text: `A professional studio fashion photography shot of a full-body outfit for a ${params.gender}. 
-            The person has a ${params.bodyType || "standard"} body type.
-            Style: ${params.stylePersona}. Occasion: ${params.occasion}.
-            Outfit details: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}. 
-            CRITICAL: The image MUST ONLY show the clothing and accessories on a plain, neutral studio background. 
-            STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.
-            The image should look like a high-end e-commerce product shot (like Zara or H&M).` 
+            text: `You are an AI fashion stylist and image generator.
+            Generate a realistic full-body outfit image based strictly on the following user inputs:
+            Occasion: ${params.occasion}
+            Style Persona: ${params.stylePersona}
+            Body Type: ${params.bodyType || "standard"}
+            Budget: ${params.budgetTier}
+            Gender: ${params.gender}
+            Season: ${params.season}
+            Color Preference: ${params.colorPreferences.join(", ")}
+            Outfit Details: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}, ${outfit.pieces.accessories}.
+
+            Instructions:
+            - Create a complete outfit (top, bottom, footwear, accessories).
+            - Ensure the outfit matches the OCCASION appropriately.
+            - Reflect the STYLE PERSONA in silhouette, fabrics, and overall aesthetic.
+            - Adapt the outfit to flatter the given BODY TYPE.
+            - Respect the BUDGET:
+              - Low budget → simple fabrics, minimal accessories
+              - Mid-range → balanced styling
+              - Luxe → premium fabrics, detailed styling, statement pieces
+            - Match the SEASON (fabric, layering, colors).
+            - Strictly follow the COLOR PREFERENCE in the outfit.
+
+            Output Requirements:
+            - Generate a highly realistic, full-body fashion model image.
+            - Clean background (studio or relevant to occasion).
+            - Model pose should clearly show the outfit.
+            - Include accurate textures (cotton, silk, denim, etc.).
+            - Ensure modern, trendy, and wearable styling.
+            - STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.` 
           }]
         },
         config: {
@@ -218,11 +241,28 @@ export async function generateWeeklyPlan(params: {
             model: "gemini-3.1-flash-image-preview",
             contents: {
               parts: [{ 
-                text: `A professional studio fashion photography shot of a full-body outfit. 
-                Occasion: ${outfit.occasion}. Style: ${outfit.outfitName}.
-                CRITICAL: The image MUST ONLY show the clothing and accessories on a plain, neutral studio background. 
-                STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.
-                The image should look like a high-end e-commerce product shot (like Zara or H&M).` 
+                text: `You are an AI fashion stylist and image generator.
+                Generate a realistic full-body outfit image based strictly on the following user inputs:
+                Occasion: ${outfit.occasion}
+                Outfit Name: ${outfit.outfitName}
+                Outfit Details: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}, ${outfit.pieces.accessories}.
+                Season: ${outfit.season}
+                Color Palette: ${outfit.colorPalette.join(", ")}
+
+                Instructions:
+                - Create a complete outfit (top, bottom, footwear, accessories).
+                - Ensure the outfit matches the OCCASION appropriately.
+                - Reflect the STYLE PERSONA in silhouette, fabrics, and overall aesthetic.
+                - Match the SEASON (fabric, layering, colors).
+                - Strictly follow the COLOR PALETTE in the outfit.
+
+                Output Requirements:
+                - Generate a highly realistic, full-body fashion model image.
+                - Clean background (studio or relevant to occasion).
+                - Model pose should clearly show the outfit.
+                - Include accurate textures (cotton, silk, denim, etc.).
+                - Ensure modern, trendy, and wearable styling.
+                - STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.` 
               }]
             },
             config: {
