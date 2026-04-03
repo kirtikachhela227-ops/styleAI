@@ -268,7 +268,7 @@ export default function WeeklyPlanner() {
                           />
                         ) : (
                           <img 
-                            src={`https://picsum.photos/seed/${encodeURIComponent(outfit.outfitName)}/800/1200`}
+                            src="https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80"
                             alt={outfit.outfitName}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-60"
                             referrerPolicy="no-referrer"

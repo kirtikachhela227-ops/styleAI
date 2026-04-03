@@ -79,19 +79,21 @@ export async function generateOutfit(params: {
     // Generate a highly relevant fashion image using Gemini Image model
     try {
       const imageResponse = await ai.models.generateContent({
-        model: "gemini-2.5-flash-image",
+        model: "gemini-3.1-flash-image-preview",
         contents: {
           parts: [{ 
-            text: `A professional, high-quality fashion photography shot of a full-body outfit for a ${params.gender}. 
-            The image MUST ONLY show the clothing and accessories. NO food, NO scenery, NO backgrounds other than a simple studio backdrop.
-            Outfit details: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}. 
+            text: `A professional studio fashion photography shot of a full-body outfit for a ${params.gender}. 
+            CRITICAL: The image MUST ONLY show the clothing and accessories on a plain, neutral studio background. 
+            STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.
+            Outfit to depict: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}. 
             Style: ${params.stylePersona}. Occasion: ${params.occasion}.
-            Focus strictly on the garments and how they are styled together.` 
+            The image should look like a high-end e-commerce product shot (like Zara or H&M).` 
           }]
         },
         config: {
           imageConfig: {
             aspectRatio: "3:4",
+            imageSize: "1K"
           },
         },
       });
@@ -104,8 +106,8 @@ export async function generateOutfit(params: {
       }
     } catch (imageError) {
       console.error("Failed to generate AI image:", imageError);
-      const seed = `${params.gender}-${params.occasion}-${outfit.outfitName}`.toLowerCase().replace(/\s+/g, '-');
-      outfit.imageUrl = `https://picsum.photos/seed/${encodeURIComponent(seed)}/800/1200`;
+      // Fallback to a static, high-quality fashion placeholder instead of random scenery
+      outfit.imageUrl = "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80";
     }
     
     return outfit;
@@ -196,11 +198,12 @@ export async function generateWeeklyPlan(params: {
       if (outfit && outfit.outfitName) {
         try {
           const imageResponse = await ai.models.generateContent({
-            model: "gemini-2.5-flash-image",
+            model: "gemini-3.1-flash-image-preview",
             contents: {
               parts: [{ 
-                text: `A high-quality fashion photography shot of a full-body outfit. 
-                The image MUST ONLY show the clothing and accessories. NO food, NO scenery, NO backgrounds other than a simple studio backdrop.
+                text: `A professional studio fashion photography shot of a full-body outfit. 
+                CRITICAL: The image MUST ONLY show the clothing and accessories on a plain, neutral studio background. 
+                STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.
                 Outfit: ${outfit.outfitName} for a ${outfit.occasion}. 
                 Focus strictly on the garments and how they are styled together.` 
               }]
@@ -208,6 +211,7 @@ export async function generateWeeklyPlan(params: {
             config: {
               imageConfig: {
                 aspectRatio: "3:4",
+                imageSize: "1K"
               },
             },
           });
@@ -220,8 +224,8 @@ export async function generateWeeklyPlan(params: {
           }
         } catch (imageError) {
           console.error(`Failed to generate AI image for ${day}:`, imageError);
-          const seed = `outfit-${day}-${outfit.outfitName}`.toLowerCase().replace(/\s+/g, '-');
-          outfit.imageUrl = `https://picsum.photos/seed/${encodeURIComponent(seed)}/800/1200`;
+          // Fallback to a static, high-quality fashion placeholder instead of random scenery
+          outfit.imageUrl = "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80";
         }
       }
     });

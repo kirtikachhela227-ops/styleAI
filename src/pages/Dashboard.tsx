@@ -48,7 +48,6 @@ export default function Dashboard() {
 
   const quickActions = [
     { title: 'Generate Outfit', desc: 'AI-curated looks for any event', icon: Shirt, link: '/generator', color: 'bg-gold/10 text-gold' },
-    { title: 'My Wardrobe', desc: 'Manage your saved styles', icon: Shirt, link: '/wardrobe', color: 'bg-charcoal/5 text-charcoal' },
     { title: 'Filters & Search', desc: 'Find styles in your collection', icon: History, link: '/filters', color: 'bg-gold/10 text-gold' },
     { title: 'Settings', desc: 'Manage profile & preferences', icon: Calendar, link: '/settings', color: 'bg-charcoal/5 text-charcoal' },
   ];
