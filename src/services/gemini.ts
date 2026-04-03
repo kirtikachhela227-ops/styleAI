@@ -82,9 +82,13 @@ export async function generateOutfit(params: {
         model: "gemini-3.1-flash-image-preview",
         contents: {
           parts: [{ 
-            text: `A professional studio fashion shot of a full-body outfit for a ${params.gender}. 
-            CRITICAL: Plain neutral background ONLY. NO scenery, NO nature, NO food.
-            Outfit: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}.` 
+            text: `A professional studio fashion photography shot of a full-body outfit for a ${params.gender}. 
+            The person has a ${params.bodyType || "standard"} body type.
+            Style: ${params.stylePersona}. Occasion: ${params.occasion}.
+            Outfit details: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}. 
+            CRITICAL: The image MUST ONLY show the clothing and accessories on a plain, neutral studio background. 
+            STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.
+            The image should look like a high-end e-commerce product shot (like Zara or H&M).` 
           }]
         },
         config: {
@@ -104,13 +108,17 @@ export async function generateOutfit(params: {
     } catch (imageError: any) {
       console.error("Failed to generate AI image:", imageError);
       
-      // Handle Quota Exceeded for images specifically
-      if (imageError.message?.includes("429") || imageError.message?.includes("quota")) {
-        console.warn("Image generation quota exceeded. Using fallback.");
-      }
+      // Handle Quota Exceeded or other errors with a dynamic keyword-based fallback
+      const keywords = [
+        params.gender,
+        params.occasion,
+        params.stylePersona,
+        "fashion",
+        "outfit"
+      ].map(k => k.toLowerCase().replace(/\s+/g, '')).join(',');
       
-      // Fallback to a static, high-quality fashion placeholder instead of random scenery
-      outfit.imageUrl = "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80";
+      // Use LoremFlickr for keyword-based dynamic fashion images when AI quota is hit
+      outfit.imageUrl = `https://loremflickr.com/800/1200/${keywords}/all`;
     }
     
     return outfit;
@@ -210,9 +218,11 @@ export async function generateWeeklyPlan(params: {
             model: "gemini-3.1-flash-image-preview",
             contents: {
               parts: [{ 
-                text: `A professional studio fashion shot of a full-body outfit. 
-                CRITICAL: Plain neutral background ONLY. NO scenery, NO nature, NO food.
-                Outfit: ${outfit.outfitName} for ${outfit.occasion}.` 
+                text: `A professional studio fashion photography shot of a full-body outfit. 
+                Occasion: ${outfit.occasion}. Style: ${outfit.outfitName}.
+                CRITICAL: The image MUST ONLY show the clothing and accessories on a plain, neutral studio background. 
+                STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.
+                The image should look like a high-end e-commerce product shot (like Zara or H&M).` 
               }]
             },
             config: {
@@ -232,14 +242,15 @@ export async function generateWeeklyPlan(params: {
         } catch (imageError: any) {
           console.error(`Failed to generate AI image for ${day}:`, imageError);
           
-          // If we hit quota for one image, we likely hit it for all. 
-          // We don't throw here to allow the rest of the plan to be returned with fallbacks.
-          if (imageError.message?.includes("429") || imageError.message?.includes("quota")) {
-            console.warn(`Image generation quota exceeded for ${day}. Using fallback.`);
-          }
+          // Handle Quota Exceeded or other errors with a dynamic keyword-based fallback
+          const keywords = [
+            outfit.occasion,
+            "fashion",
+            "outfit"
+          ].map(k => k.toLowerCase().replace(/\s+/g, '')).join(',');
           
-          // High-quality static fashion fallback
-          outfit.imageUrl = "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80";
+          // Use LoremFlickr for keyword-based dynamic fashion images when AI quota is hit
+          outfit.imageUrl = `https://loremflickr.com/800/1200/${keywords}/all`;
         }
       }
     });
