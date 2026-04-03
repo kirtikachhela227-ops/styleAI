@@ -82,18 +82,15 @@ export async function generateOutfit(params: {
         model: "gemini-3.1-flash-image-preview",
         contents: {
           parts: [{ 
-            text: `A professional studio fashion photography shot of a full-body outfit for a ${params.gender}. 
-            CRITICAL: The image MUST ONLY show the clothing and accessories on a plain, neutral studio background. 
-            STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.
-            Outfit to depict: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}. 
-            Style: ${params.stylePersona}. Occasion: ${params.occasion}.
-            The image should look like a high-end e-commerce product shot (like Zara or H&M).` 
+            text: `A professional studio fashion shot of a full-body outfit for a ${params.gender}. 
+            CRITICAL: Plain neutral background ONLY. NO scenery, NO nature, NO food.
+            Outfit: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}.` 
           }]
         },
         config: {
           imageConfig: {
             aspectRatio: "3:4",
-            imageSize: "1K"
+            imageSize: "512px" // Faster generation
           },
         },
       });
@@ -192,7 +189,7 @@ export async function generateWeeklyPlan(params: {
     
     const plan = JSON.parse(text) as { [day: string]: Outfit };
     
-    // Add relevant image URLs for each day in parallel
+    // Add relevant image URLs for each day in parallel, but with smaller size for speed
     const imagePromises = Object.keys(plan).map(async (day) => {
       const outfit = plan[day];
       if (outfit && outfit.outfitName) {
@@ -201,17 +198,15 @@ export async function generateWeeklyPlan(params: {
             model: "gemini-3.1-flash-image-preview",
             contents: {
               parts: [{ 
-                text: `A professional studio fashion photography shot of a full-body outfit. 
-                CRITICAL: The image MUST ONLY show the clothing and accessories on a plain, neutral studio background. 
-                STRICTLY FORBIDDEN: No food, no scenery, no nature, no trees, no lakes, no mountains, no outdoor backgrounds.
-                Outfit: ${outfit.outfitName} for a ${outfit.occasion}. 
-                Focus strictly on the garments and how they are styled together.` 
+                text: `A professional studio fashion shot of a full-body outfit. 
+                CRITICAL: Plain neutral background ONLY. NO scenery, NO nature, NO food.
+                Outfit: ${outfit.outfitName} for ${outfit.occasion}.` 
               }]
             },
             config: {
               imageConfig: {
                 aspectRatio: "3:4",
-                imageSize: "1K"
+                imageSize: "512px" // Smaller size for much faster generation in weekly view
               },
             },
           });
@@ -220,11 +215,11 @@ export async function generateWeeklyPlan(params: {
           if (imagePart?.inlineData) {
             outfit.imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
           } else {
-            throw new Error("No image data in response");
+            throw new Error("No image data");
           }
         } catch (imageError) {
           console.error(`Failed to generate AI image for ${day}:`, imageError);
-          // Fallback to a static, high-quality fashion placeholder instead of random scenery
+          // High-quality static fashion fallback
           outfit.imageUrl = "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80";
         }
       }

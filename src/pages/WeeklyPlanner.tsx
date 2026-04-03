@@ -161,7 +161,7 @@ export default function WeeklyPlanner() {
                   {loading ? (
                     <>
                       <RefreshCw className="mr-3 w-6 h-6 animate-spin" />
-                      Planning your week...
+                      Designing 7 custom looks...
                     </>
                   ) : (
                     <>
