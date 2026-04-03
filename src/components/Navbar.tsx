@@ -18,7 +18,6 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Generate', path: '/generator', icon: Sparkles },
-    { name: 'Wardrobe', path: '/wardrobe', icon: Shirt },
     { name: 'Filters', path: '/filters', icon: Search },
     { name: 'Planner', path: '/planner', icon: Calendar },
     { name: 'Settings', path: '/settings', icon: Settings },

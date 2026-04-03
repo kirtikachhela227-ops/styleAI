@@ -236,13 +236,6 @@ export default function OutfitGenerator() {
                   >
                     {shared ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
                   </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={saved}
-                    className={`p-3 rounded-2xl transition-all flex items-center justify-center min-w-[48px] min-h-[48px] ${saved ? 'bg-green-500 text-white' : 'bg-[#C9A84C] text-white hover:bg-opacity-90 active:scale-95 disabled:opacity-50 disabled:scale-100'}`}
-                  >
-                    {saved ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
-                  </button>
                 </div>
               </div>
 

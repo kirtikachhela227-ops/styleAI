@@ -82,10 +82,11 @@ export async function generateOutfit(params: {
         model: "gemini-2.5-flash-image",
         contents: {
           parts: [{ 
-            text: `A professional fashion photography shot of a ${params.gender} wearing a ${outfit.outfitName}. 
-            The outfit consists of: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}. 
-            Style: ${params.stylePersona}. Occasion: ${params.occasion}. Season: ${params.season}.
-            High quality, editorial style.` 
+            text: `A professional, high-quality fashion photography shot of a full-body outfit for a ${params.gender}. 
+            The image MUST ONLY show the clothing and accessories. NO food, NO scenery, NO backgrounds other than a simple studio backdrop.
+            Outfit details: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}. 
+            Style: ${params.stylePersona}. Occasion: ${params.occasion}.
+            Focus strictly on the garments and how they are styled together.` 
           }]
         },
         config: {
@@ -198,8 +199,10 @@ export async function generateWeeklyPlan(params: {
             model: "gemini-2.5-flash-image",
             contents: {
               parts: [{ 
-                text: `A professional fashion photography shot of a person wearing a ${outfit.outfitName} for a ${outfit.occasion}. 
-                High quality, editorial style.` 
+                text: `A high-quality fashion photography shot of a full-body outfit. 
+                The image MUST ONLY show the clothing and accessories. NO food, NO scenery, NO backgrounds other than a simple studio backdrop.
+                Outfit: ${outfit.outfitName} for a ${outfit.occasion}. 
+                Focus strictly on the garments and how they are styled together.` 
               }]
             },
             config: {
