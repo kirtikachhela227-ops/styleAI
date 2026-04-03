@@ -13,21 +13,23 @@ export async function generateOutfit(params: {
   season: string;
   colorPreferences: string[];
 }): Promise<Outfit> {
-  const prompt = `Generate a complete, wearable outfit recommendation based on the following context:
-  - Occasion: ${params.occasion}
-  - Style Persona: ${params.stylePersona}
-  - Body Type: ${params.bodyType || "Any"}
-  - Budget Tier: ${params.budgetTier}
-  - Gender: ${params.gender}
-  - Season/Weather: ${params.season}
-  - Color Preferences: ${params.colorPreferences.join(", ")}
+  const prompt = `Generate a complete, wearable outfit recommendation for a ${params.gender} for ${params.occasion}. 
+  Style: ${params.stylePersona}. Body Type: ${params.bodyType || "Any"}. Budget: ${params.budgetTier}. Season: ${params.season}. Colors: ${params.colorPreferences.join(", ")}.
   
-  Provide a creative title, complete look (top, bottom, shoes, bag, accessories, outerwear), color palette (hex codes), styling tip, budget range in ₹, and suggested Indian shopping platforms (Myntra, Ajio, Nykaa Fashion, Meesho, Zara India).`;
+  Return a JSON object with:
+  - outfitName: string
+  - occasion: string
+  - pieces: { top: string, bottom: string, shoes: string, bag: string, accessories: string, outerwear: string }
+  - colorPalette: string[] (hex codes)
+  - stylingTip: string
+  - budgetRange: string
+  - shopAt: string[] (Indian stores like Myntra, Ajio, Zara India)
+  - season: string`;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-flash-latest",
-      contents: [{ parts: [{ text: prompt }] }],
+      model: "gemini-3-flash-preview",
+      contents: prompt,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -64,20 +66,23 @@ export async function generateOutfit(params: {
       },
     });
 
-    const outfit = JSON.parse(response.text || "{}") as Outfit;
+    const text = response.text;
+    if (!text) throw new Error("No response text from Gemini");
+    
+    const outfit = JSON.parse(text) as Outfit;
     
     // Generate a highly relevant fashion image using Gemini Image model
     try {
       const imageResponse = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
-        contents: [{ 
+        contents: {
           parts: [{ 
             text: `A professional fashion photography shot of a ${params.gender} wearing a ${outfit.outfitName}. 
             The outfit consists of: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}. 
             Style: ${params.stylePersona}. Occasion: ${params.occasion}. Season: ${params.season}.
             High quality, editorial style.` 
-          }] 
-        }],
+          }]
+        },
         config: {
           imageConfig: {
             aspectRatio: "3:4",
@@ -85,11 +90,11 @@ export async function generateOutfit(params: {
         },
       });
 
-      for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          outfit.imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-          break;
-        }
+      const imagePart = imageResponse.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+      if (imagePart?.inlineData) {
+        outfit.imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+      } else {
+        throw new Error("No image data in response");
       }
     } catch (imageError) {
       console.error("Failed to generate AI image:", imageError);
@@ -146,8 +151,8 @@ export async function generateWeeklyPlan(params: {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-flash-latest",
-      contents: [{ parts: [{ text: prompt }] }],
+      model: "gemini-3-flash-preview",
+      contents: prompt,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -166,21 +171,24 @@ export async function generateWeeklyPlan(params: {
       },
     });
 
-    const plan = JSON.parse(response.text || "{}") as { [day: string]: Outfit };
+    const text = response.text;
+    if (!text) throw new Error("No response text from Gemini");
     
-    // Add relevant image URLs for each day in parallel to avoid timeouts
+    const plan = JSON.parse(text) as { [day: string]: Outfit };
+    
+    // Add relevant image URLs for each day in parallel
     const imagePromises = Object.keys(plan).map(async (day) => {
       const outfit = plan[day];
       if (outfit && outfit.outfitName) {
         try {
           const imageResponse = await ai.models.generateContent({
             model: "gemini-2.5-flash-image",
-            contents: [{ 
+            contents: {
               parts: [{ 
                 text: `A professional fashion photography shot of a person wearing a ${outfit.outfitName} for a ${outfit.occasion}. 
                 High quality, editorial style.` 
-              }] 
-            }],
+              }]
+            },
             config: {
               imageConfig: {
                 aspectRatio: "3:4",
@@ -188,11 +196,11 @@ export async function generateWeeklyPlan(params: {
             },
           });
 
-          for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
-            if (part.inlineData) {
-              outfit.imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-              break;
-            }
+          const imagePart = imageResponse.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+          if (imagePart?.inlineData) {
+            outfit.imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+          } else {
+            throw new Error("No image data in response");
           }
         } catch (imageError) {
           console.error(`Failed to generate AI image for ${day}:`, imageError);
