@@ -257,6 +257,28 @@ export default function WeeklyPlanner() {
                   </div>
                   {outfit ? (
                     <div className="flex-1 flex flex-col">
+                      <div className="aspect-[3/4] bg-gray-50 rounded-2xl mb-4 overflow-hidden relative group">
+                        {outfit.imageUrl ? (
+                          <img 
+                            src={outfit.imageUrl} 
+                            alt={outfit.outfitName}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <img 
+                            src={`https://picsum.photos/seed/${encodeURIComponent(outfit.outfitName)}/800/1200`}
+                            alt={outfit.outfitName}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-60"
+                            referrerPolicy="no-referrer"
+                          />
+                        )}
+                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/50 to-transparent flex gap-1">
+                          {outfit.colorPalette?.slice(0, 3).map((color, idx) => (
+                            <div key={idx} className="w-3 h-3 rounded-full border border-white/50" style={{ backgroundColor: color }} />
+                          ))}
+                        </div>
+                      </div>
                       <h4 className="font-bold text-charcoal text-lg mb-3 line-clamp-2">{outfit.outfitName}</h4>
                       <div className="flex-1 space-y-4 mb-6">
                         <div>

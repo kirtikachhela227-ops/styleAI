@@ -222,7 +222,7 @@ export default function OutfitGenerator() {
             </button>
 
             <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-              <div className="p-8 bg-[#1C1C1E] text-white flex justify-between items-center">
+              <div className="p-8 bg-[#1C1C1E] text-white flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
                   <h2 className="text-3xl font-serif font-bold text-[#C9A84C] mb-1">{result.outfitName}</h2>
                   <p className="text-gray-400 uppercase tracking-widest text-xs">{result.occasion} • {result.season}</p>
@@ -230,7 +230,7 @@ export default function OutfitGenerator() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleShare}
-                    className={`p-3 rounded-2xl transition-all flex items-center ${shared ? 'bg-green-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                    className={`p-3 rounded-2xl transition-all flex items-center justify-center min-w-[48px] min-h-[48px] ${shared ? 'bg-green-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 active:scale-95'}`}
                     title="Share"
                   >
                     {shared ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
@@ -238,81 +238,103 @@ export default function OutfitGenerator() {
                   <button
                     onClick={handleSave}
                     disabled={saved}
-                    className={`p-3 rounded-2xl transition-all flex items-center ${saved ? 'bg-green-500 text-white' : 'bg-[#C9A84C] text-white hover:bg-opacity-90'}`}
+                    className={`p-3 rounded-2xl transition-all flex items-center justify-center min-w-[48px] min-h-[48px] ${saved ? 'bg-green-500 text-white' : 'bg-[#C9A84C] text-white hover:bg-opacity-90 active:scale-95 disabled:opacity-50 disabled:scale-100'}`}
                   >
                     {saved ? <Check className="w-5 h-5" /> : <Save className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
-              <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-6">
-                  <h3 className="text-xl font-serif font-bold border-b border-gray-100 pb-2">The Look</h3>
-                  <div className="space-y-4">
-                    {[
-                      { label: 'Top', value: result.pieces.top },
-                      { label: 'Bottom', value: result.pieces.bottom },
-                      { label: 'Shoes', value: result.pieces.shoes },
-                      { label: 'Bag', value: result.pieces.bag },
-                      { label: 'Accessories', value: result.pieces.accessories },
-                      { label: 'Outerwear', value: result.pieces.outerwear },
-                    ].map((item, i) => item.value && (
-                      <div key={i} className="flex gap-4 items-start">
-                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0 text-xs font-bold text-gray-400">
-                          {i + 1}
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{item.label}</p>
-                          <p className="text-gray-800 font-medium">{item.value}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-4">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Color Palette</p>
-                    <div className="flex gap-2">
-                      {result.colorPalette.map((color, i) => (
-                        <div key={i} className="w-10 h-10 rounded-2xl shadow-inner border border-gray-100" style={{ backgroundColor: color }} title={color} />
-                      ))}
+              <div className="grid grid-cols-1 lg:grid-cols-2">
+                <div className="relative aspect-[3/4] bg-gray-100 group">
+                  {result.imageUrl ? (
+                    <img 
+                      src={result.imageUrl} 
+                      alt={result.outfitName}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <ShoppingBag className="w-12 h-12" />
                     </div>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                    <p className="text-white text-sm font-medium leading-relaxed">
+                      This curated look is designed for your <span className="text-[#C9A84C] font-bold">{result.occasion}</span> event.
+                    </p>
                   </div>
                 </div>
 
-                <div className="space-y-8">
-                  <div className="bg-orange-50 p-6 rounded-3xl border border-orange-100">
-                    <h4 className="flex items-center text-orange-800 font-bold mb-2">
-                      <Info className="w-4 h-4 mr-2" /> Styling Tip
-                    </h4>
-                    <p className="text-orange-900 italic leading-relaxed">"{result.stylingTip}"</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Estimated Budget</p>
-                      <p className="text-2xl font-bold text-[#1C1C1E]">{result.budgetRange}</p>
+                <div className="p-8 space-y-8 max-h-[800px] overflow-y-auto custom-scrollbar">
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-serif font-bold border-b border-gray-100 pb-2">The Look</h3>
+                    <div className="space-y-4">
+                      {[
+                        { label: 'Top', value: result.pieces.top },
+                        { label: 'Bottom', value: result.pieces.bottom },
+                        { label: 'Shoes', value: result.pieces.shoes },
+                        { label: 'Bag', value: result.pieces.bag },
+                        { label: 'Accessories', value: result.pieces.accessories },
+                        { label: 'Outerwear', value: result.pieces.outerwear },
+                      ].map((item, i) => item.value && (
+                        <div key={i} className="flex gap-4 items-start">
+                          <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center flex-shrink-0 text-xs font-bold text-gray-400">
+                            {i + 1}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{item.label}</p>
+                            <p className="text-gray-800 font-medium">{item.value}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    
-                    <div>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Where to Shop</p>
-                      <div className="flex flex-wrap gap-2">
-                        {result.shopAt.map(shop => (
-                          <span key={shop} className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-bold text-gray-700 flex items-center">
-                            <ShoppingBag className="w-3 h-3 mr-2" /> {shop}
-                          </span>
+
+                    <div className="pt-4">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Color Palette</p>
+                      <div className="flex gap-2">
+                        {result.colorPalette.map((color, i) => (
+                          <div key={i} className="w-10 h-10 rounded-2xl shadow-inner border border-gray-100" style={{ backgroundColor: color }} title={color} />
                         ))}
                       </div>
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleGenerate}
-                    disabled={loading}
-                    className="w-full py-4 bg-white border-2 border-[#1C1C1E] text-[#1C1C1E] rounded-2xl font-bold flex items-center justify-center hover:bg-gray-50 transition-all"
-                  >
-                    <RefreshCw className={`mr-2 w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                    Regenerate Look
-                  </button>
+                  <div className="space-y-8">
+                    <div className="bg-orange-50 p-6 rounded-3xl border border-orange-100">
+                      <h4 className="flex items-center text-orange-800 font-bold mb-2">
+                        <Info className="w-4 h-4 mr-2" /> Styling Tip
+                      </h4>
+                      <p className="text-orange-900 italic leading-relaxed">"{result.stylingTip}"</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Estimated Budget</p>
+                        <p className="text-2xl font-bold text-[#1C1C1E]">{result.budgetRange}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Where to Shop</p>
+                        <div className="flex flex-wrap gap-2">
+                          {result.shopAt.map(shop => (
+                            <span key={shop} className="px-4 py-2 bg-gray-100 rounded-xl text-sm font-bold text-gray-700 flex items-center">
+                              <ShoppingBag className="w-3 h-3 mr-2" /> {shop}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleGenerate}
+                      disabled={loading}
+                      className="w-full py-4 bg-white border-2 border-[#1C1C1E] text-[#1C1C1E] rounded-2xl font-bold flex items-center justify-center hover:bg-gray-50 active:scale-[0.98] transition-all"
+                    >
+                      <RefreshCw className={`mr-2 w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                      Regenerate Look
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

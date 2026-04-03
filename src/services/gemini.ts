@@ -42,7 +42,7 @@ export async function generateOutfit(params: {
               shoes: { type: Type.STRING },
               bag: { type: Type.STRING },
               accessories: { type: Type.STRING },
-              outerwear: { type: Type.STRING, nullable: true },
+              outerwear: { type: Type.STRING },
             },
             required: ["top", "bottom", "shoes", "bag", "accessories"],
           },
@@ -63,7 +63,43 @@ export async function generateOutfit(params: {
     },
   });
 
-  return JSON.parse(response.text || "{}") as Outfit;
+  const outfit = JSON.parse(response.text || "{}") as Outfit;
+  
+  // Generate a highly relevant fashion image using Gemini Image model
+  try {
+    const imageResponse = await ai.models.generateContent({
+      model: "gemini-2.5-flash-image",
+      contents: {
+        parts: [
+          {
+            text: `A professional fashion photography shot of a ${params.gender} wearing a ${outfit.outfitName}. 
+            The outfit consists of: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}, and ${outfit.pieces.accessories}. 
+            Style: ${params.stylePersona}. Occasion: ${params.occasion}. Season: ${params.season}.
+            The background should be appropriate for the occasion. High quality, editorial style.`,
+          },
+        ],
+      },
+      config: {
+        imageConfig: {
+          aspectRatio: "3:4",
+        },
+      },
+    });
+
+    for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        outfit.imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        break;
+      }
+    }
+  } catch (imageError) {
+    console.error("Failed to generate AI image:", imageError);
+    // Fallback to picsum if AI image generation fails
+    const seed = `${params.gender}-${params.occasion}-${outfit.outfitName}`.toLowerCase().replace(/\s+/g, '-');
+    outfit.imageUrl = `https://picsum.photos/seed/${encodeURIComponent(seed)}/800/1200`;
+  }
+  
+  return outfit;
 }
 
 export async function generateWeeklyPlan(params: {
@@ -71,7 +107,40 @@ export async function generateWeeklyPlan(params: {
   context: string;
 }): Promise<{ [day: string]: Outfit }> {
   const prompt = `Generate a 7-day weekly outfit plan (Mon-Sun) for: ${params.tripType}. Context: ${params.context}.
-  For each day, provide a complete outfit in the specified JSON format.`;
+  For each day, provide a complete outfit including name, pieces, color palette (hex codes), styling tip, budget range, and shopping platforms.
+  Ensure the outfits are varied and appropriate for the context.`;
+
+  const outfitSchema = {
+    type: Type.OBJECT,
+    properties: {
+      outfitName: { type: Type.STRING },
+      occasion: { type: Type.STRING },
+      pieces: {
+        type: Type.OBJECT,
+        properties: {
+          top: { type: Type.STRING },
+          bottom: { type: Type.STRING },
+          shoes: { type: Type.STRING },
+          bag: { type: Type.STRING },
+          accessories: { type: Type.STRING },
+          outerwear: { type: Type.STRING },
+        },
+        required: ["top", "bottom", "shoes", "bag", "accessories"],
+      },
+      colorPalette: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+      },
+      stylingTip: { type: Type.STRING },
+      budgetRange: { type: Type.STRING },
+      shopAt: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+      },
+      season: { type: Type.STRING },
+    },
+    required: ["outfitName", "occasion", "pieces", "colorPalette", "stylingTip", "budgetRange", "shopAt", "season"],
+  };
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -81,37 +150,58 @@ export async function generateWeeklyPlan(params: {
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          Monday: { $ref: "#/definitions/outfit" },
-          Tuesday: { $ref: "#/definitions/outfit" },
-          Wednesday: { $ref: "#/definitions/outfit" },
-          Thursday: { $ref: "#/definitions/outfit" },
-          Friday: { $ref: "#/definitions/outfit" },
-          Saturday: { $ref: "#/definitions/outfit" },
-          Sunday: { $ref: "#/definitions/outfit" },
+          Monday: outfitSchema,
+          Tuesday: outfitSchema,
+          Wednesday: outfitSchema,
+          Thursday: outfitSchema,
+          Friday: outfitSchema,
+          Saturday: outfitSchema,
+          Sunday: outfitSchema,
         },
-        definitions: {
-          outfit: {
-            type: Type.OBJECT,
-            properties: {
-              outfitName: { type: Type.STRING },
-              pieces: {
-                type: Type.OBJECT,
-                properties: {
-                  top: { type: Type.STRING },
-                  bottom: { type: Type.STRING },
-                  shoes: { type: Type.STRING },
-                  bag: { type: Type.STRING },
-                  accessories: { type: Type.STRING },
-                  outerwear: { type: Type.STRING, nullable: true },
-                },
-              },
-              stylingTip: { type: Type.STRING },
-            },
-          },
-        },
+        required: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
       },
     },
   });
 
-  return JSON.parse(response.text || "{}");
+  const plan = JSON.parse(response.text || "{}") as { [day: string]: Outfit };
+  
+  // Add relevant image URLs for each day using Gemini Image model
+  for (const day of Object.keys(plan)) {
+    const outfit = plan[day];
+    if (outfit && outfit.outfitName) {
+      try {
+        const imageResponse = await ai.models.generateContent({
+          model: "gemini-2.5-flash-image",
+          contents: {
+            parts: [
+              {
+                text: `A professional fashion photography shot of a person wearing a ${outfit.outfitName} for a ${outfit.occasion}. 
+                The outfit consists of: ${outfit.pieces.top}, ${outfit.pieces.bottom}, ${outfit.pieces.shoes}. 
+                High quality, editorial style, appropriate background for ${outfit.occasion}.`,
+              },
+            ],
+          },
+          config: {
+            imageConfig: {
+              aspectRatio: "3:4",
+            },
+          },
+        });
+
+        for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
+          if (part.inlineData) {
+            outfit.imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            break;
+          }
+        }
+      } catch (imageError) {
+        console.error(`Failed to generate AI image for ${day}:`, imageError);
+        // Fallback to picsum if AI image generation fails
+        const seed = `outfit-${day}-${outfit.outfitName}`.toLowerCase().replace(/\s+/g, '-');
+        outfit.imageUrl = `https://picsum.photos/seed/${encodeURIComponent(seed)}/800/1200`;
+      }
+    }
+  }
+  
+  return plan;
 }

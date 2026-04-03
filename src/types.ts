@@ -17,6 +17,7 @@ export interface Outfit {
   season: string;
   createdAt?: any;
   rating?: number;
+  imageUrl?: string;
 }
 
 export interface UserProfile {

@@ -96,18 +96,19 @@ service cloud.firestore {
     }
 
     function isValidOutfit(data) {
-      return data.keys().hasOnly(['id', 'outfitName', 'occasion', 'pieces', 'colorPalette', 'stylingTip', 'budgetRange', 'shopAt', 'season', 'uid', 'createdAt', 'rating']) &&
+      return data.keys().hasOnly(['outfitName', 'occasion', 'pieces', 'colorPalette', 'stylingTip', 'budgetRange', 'shopAt', 'season', 'uid', 'createdAt', 'rating', 'imageUrl']) &&
              data.keys().hasAll(['outfitName', 'occasion', 'pieces', 'colorPalette', 'stylingTip', 'budgetRange', 'shopAt', 'season', 'uid', 'createdAt']) &&
              data.uid == request.auth.uid &&
              data.outfitName is string && data.outfitName.size() > 0 && data.outfitName.size() < 200 &&
              data.pieces is map &&
              data.colorPalette is list &&
              data.stylingTip is string && data.stylingTip.size() < 1000 &&
-             isValidDateString(data.createdAt);
+             isValidDateString(data.createdAt) &&
+             (!('imageUrl' in data) || isValidUrl(data.imageUrl));
     }
 
     function isValidWeeklyPlan(data) {
-      return data.keys().hasOnly(['id', 'title', 'context', 'outfits', 'uid', 'createdAt']) &&
+      return data.keys().hasOnly(['title', 'context', 'outfits', 'uid', 'createdAt']) &&
              data.keys().hasAll(['title', 'context', 'outfits', 'uid', 'createdAt']) &&
              data.uid == request.auth.uid &&
              data.title is string && data.title.size() > 0 && data.title.size() < 200 &&

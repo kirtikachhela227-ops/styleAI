@@ -127,11 +127,25 @@ export default function Wardrobe() {
               className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer group relative"
             >
               <div className="aspect-[3/4] bg-gray-50 rounded-2xl mb-4 flex items-center justify-center text-gray-300 relative overflow-hidden">
-                <Shirt className="w-12 h-12" />
+                {outfit.imageUrl ? (
+                  <img 
+                    src={outfit.imageUrl} 
+                    alt={outfit.outfitName}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <img 
+                    src={`https://picsum.photos/seed/${encodeURIComponent(outfit.outfitName)}/800/1200`}
+                    alt={outfit.outfitName}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-60"
+                    referrerPolicy="no-referrer"
+                  />
+                )}
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={(e) => handleDelete(outfit.id!, e)}
-                    className="p-2 bg-white/90 text-red-500 rounded-xl hover:bg-red-50 shadow-sm"
+                    className="p-2 bg-white/90 text-red-500 rounded-xl hover:bg-red-50 shadow-sm active:scale-95"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -144,8 +158,8 @@ export default function Wardrobe() {
               </div>
               <h3 className="font-bold text-lg mb-1 truncate">{outfit.outfitName}</h3>
               <div className="flex justify-between items-center">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">{outfit.occasion}</p>
-                <div className="flex items-center text-yellow-500">
+                <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">{outfit.occasion}</p>
+                <div className="flex items-center text-yellow-500 bg-yellow-50 px-2 py-1 rounded-lg">
                   <Star className="w-3 h-3 fill-current" />
                   <span className="text-xs ml-1 font-bold">{outfit.rating || 5}.0</span>
                 </div>
@@ -204,54 +218,84 @@ export default function Wardrobe() {
           >
             <motion.div
               layoutId={selectedOutfit.id}
-              className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl"
+              className="bg-white w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-8 bg-[#1C1C1E] text-white flex justify-between items-center">
-                <div>
-                  <h2 className="text-2xl font-serif font-bold text-[#C9A84C]">{selectedOutfit.outfitName}</h2>
-                  <p className="text-gray-400 text-sm uppercase tracking-widest">{selectedOutfit.occasion} • {selectedOutfit.season}</p>
+              <div className="md:w-1/2 aspect-[3/4] bg-gray-100 relative">
+                {selectedOutfit.imageUrl ? (
+                  <img 
+                    src={selectedOutfit.imageUrl} 
+                    alt={selectedOutfit.outfitName}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <img 
+                    src={`https://picsum.photos/seed/${encodeURIComponent(selectedOutfit.outfitName)}/800/1200`}
+                    alt={selectedOutfit.outfitName}
+                    className="w-full h-full object-cover opacity-60"
+                    referrerPolicy="no-referrer"
+                  />
+                )}
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/60 to-transparent">
+                  <h2 className="text-3xl font-serif font-bold text-white mb-1">{selectedOutfit.outfitName}</h2>
+                  <p className="text-gold uppercase tracking-widest text-xs font-bold">{selectedOutfit.occasion} • {selectedOutfit.season}</p>
                 </div>
-                <button onClick={() => setSelectedOutfit(null)} className="p-2 hover:bg-white/10 rounded-full">
-                  <X className="w-6 h-6" />
-                </button>
               </div>
-              <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">The Look</h4>
-                  <ul className="space-y-3">
-                    {Object.entries(selectedOutfit.pieces).map(([key, val]) => val && (
-                      <li key={key} className="flex items-start gap-3">
-                        <div className="w-2 h-2 rounded-full bg-[#C9A84C] mt-2" />
-                        <div>
-                          <p className="text-xs font-bold text-gray-400 capitalize">{key}</p>
-                          <p className="text-sm font-medium text-gray-800">{val}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+
+              <div className="md:w-1/2 p-8 overflow-y-auto max-h-[80vh] custom-scrollbar">
+                <div className="flex justify-between items-start mb-6">
+                  <h3 className="text-xl font-serif font-bold border-b border-gray-100 pb-2 flex-1">The Look</h3>
+                  <button onClick={() => setSelectedOutfit(null)} className="p-2 hover:bg-gray-100 rounded-full ml-4">
+                    <X className="w-6 h-6 text-gray-400" />
+                  </button>
                 </div>
-                <div className="space-y-6">
-                  <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
-                    <p className="text-xs font-bold text-orange-800 uppercase mb-1">Styling Tip</p>
-                    <p className="text-sm text-orange-900 italic">"{selectedOutfit.stylingTip}"</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase mb-2">Shop At</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedOutfit.shopAt.map(shop => (
-                        <span key={shop} className="px-3 py-1 bg-gray-100 rounded-lg text-xs font-bold text-gray-600">
-                          {shop}
-                        </span>
+
+                <div className="grid grid-cols-1 gap-8">
+                  <div className="space-y-4">
+                    <ul className="space-y-3">
+                      {Object.entries(selectedOutfit.pieces).map(([key, val]) => val && (
+                        <li key={key} className="flex items-start gap-3">
+                          <div className="w-2 h-2 rounded-full bg-[#C9A84C] mt-2" />
+                          <div>
+                            <p className="text-xs font-bold text-gray-400 capitalize">{key}</p>
+                            <p className="text-sm font-medium text-gray-800">{val}</p>
+                          </div>
+                        </li>
                       ))}
+                    </ul>
+                    <div className="pt-4">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Color Palette</p>
+                      <div className="flex gap-2">
+                        {selectedOutfit.colorPalette.map((color, i) => (
+                          <div key={i} className="w-8 h-8 rounded-xl shadow-inner border border-gray-100" style={{ backgroundColor: color }} title={color} />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  <div className="pt-4 flex items-center justify-between border-t border-gray-100">
-                    <p className="text-lg font-bold text-[#1C1C1E]">{selectedOutfit.budgetRange}</p>
-                    <div className="flex items-center text-yellow-500">
-                      {[1, 2, 3, 4, 5].map(i => (
-                        <Star key={i} className={`w-4 h-4 ${i <= (selectedOutfit.rating || 5) ? 'fill-current' : 'text-gray-200'}`} />
-                      ))}
+
+                  <div className="space-y-6">
+                    <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                      <p className="text-xs font-bold text-orange-800 uppercase mb-1">Styling Tip</p>
+                      <p className="text-sm text-orange-900 italic">"{selectedOutfit.stylingTip}"</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-400 uppercase mb-2">Shop At</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedOutfit.shopAt.map(shop => (
+                          <span key={shop} className="px-3 py-1 bg-gray-100 rounded-lg text-xs font-bold text-gray-600">
+                            {shop}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="pt-4 flex items-center justify-between border-t border-gray-100">
+                      <p className="text-lg font-bold text-[#1C1C1E]">{selectedOutfit.budgetRange}</p>
+                      <div className="flex items-center text-yellow-500">
+                        {[1, 2, 3, 4, 5].map(i => (
+                          <Star key={i} className={`w-4 h-4 ${i <= (selectedOutfit.rating || 5) ? 'fill-current' : 'text-gray-200'}`} />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
