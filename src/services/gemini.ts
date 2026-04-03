@@ -32,7 +32,7 @@ export async function generateOutfit(params: {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.1-flash-lite-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -101,15 +101,24 @@ export async function generateOutfit(params: {
       } else {
         throw new Error("No image data in response");
       }
-    } catch (imageError) {
+    } catch (imageError: any) {
       console.error("Failed to generate AI image:", imageError);
+      
+      // Handle Quota Exceeded for images specifically
+      if (imageError.message?.includes("429") || imageError.message?.includes("quota")) {
+        console.warn("Image generation quota exceeded. Using fallback.");
+      }
+      
       // Fallback to a static, high-quality fashion placeholder instead of random scenery
       outfit.imageUrl = "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80";
     }
     
     return outfit;
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error in generateOutfit:", err);
+    if (err.message?.includes("429") || err.message?.includes("quota")) {
+      throw new Error("AI Quota Exceeded: You've reached the daily limit for free AI generations. Please try again in a few hours or tomorrow.");
+    }
     throw err;
   }
 }
@@ -163,7 +172,7 @@ export async function generateWeeklyPlan(params: {
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.1-flash-lite-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -190,10 +199,13 @@ export async function generateWeeklyPlan(params: {
     const plan = JSON.parse(text) as { [day: string]: Outfit };
     
     // Add relevant image URLs for each day in parallel, but with smaller size for speed
-    const imagePromises = Object.keys(plan).map(async (day) => {
+    const imagePromises = Object.keys(plan).map(async (day, index) => {
       const outfit = plan[day];
       if (outfit && outfit.outfitName) {
         try {
+          // Add a small staggered delay to help avoid hitting per-minute rate limits
+          await new Promise(resolve => setTimeout(resolve, index * 500));
+          
           const imageResponse = await ai.models.generateContent({
             model: "gemini-3.1-flash-image-preview",
             contents: {
@@ -217,8 +229,15 @@ export async function generateWeeklyPlan(params: {
           } else {
             throw new Error("No image data");
           }
-        } catch (imageError) {
+        } catch (imageError: any) {
           console.error(`Failed to generate AI image for ${day}:`, imageError);
+          
+          // If we hit quota for one image, we likely hit it for all. 
+          // We don't throw here to allow the rest of the plan to be returned with fallbacks.
+          if (imageError.message?.includes("429") || imageError.message?.includes("quota")) {
+            console.warn(`Image generation quota exceeded for ${day}. Using fallback.`);
+          }
+          
           // High-quality static fashion fallback
           outfit.imageUrl = "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80";
         }
@@ -227,8 +246,11 @@ export async function generateWeeklyPlan(params: {
 
     await Promise.all(imagePromises);
     return plan;
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error in generateWeeklyPlan:", err);
+    if (err.message?.includes("429") || err.message?.includes("quota")) {
+      throw new Error("AI Quota Exceeded: You've reached the daily limit for free AI generations. Please try again in a few hours or tomorrow.");
+    }
     throw err;
   }
 }

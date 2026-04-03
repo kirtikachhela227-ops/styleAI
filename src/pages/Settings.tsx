@@ -149,28 +149,6 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* Data Section */}
-        <section className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-          <h2 className="text-xl font-serif font-bold mb-6 flex items-center">
-            <Share2 className="w-5 h-5 mr-2 text-gold" /> Data & Export
-          </h2>
-          <div className="space-y-4">
-            <button
-              onClick={handleExport}
-              className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between hover:bg-gray-100 transition-all group"
-            >
-              <div className="flex items-center">
-                <Download className="w-5 h-5 mr-3 text-gray-400 group-hover:text-gold transition-colors" />
-                <div className="text-left">
-                  <p className="font-bold text-charcoal">Export Wardrobe</p>
-                  <p className="text-xs text-gray-500">Download your saved outfits as JSON</p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-300" />
-            </button>
-          </div>
-        </section>
-
         {/* Danger Zone */}
         <section className="bg-red-50 p-8 rounded-3xl border border-red-100">
           <h2 className="text-xl font-serif font-bold mb-6 text-red-800 flex items-center">

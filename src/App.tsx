@@ -4,7 +4,6 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import OutfitGenerator from './pages/OutfitGenerator';
-import Wardrobe from './pages/Wardrobe';
 import WeeklyPlanner from './pages/WeeklyPlanner';
 import Filters from './pages/Filters';
 import Settings from './pages/Settings';
@@ -26,7 +25,6 @@ function AppRoutes() {
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
       <Route path="/generator" element={user ? <OutfitGenerator /> : <Navigate to="/login" />} />
-      <Route path="/wardrobe" element={user ? <Wardrobe /> : <Navigate to="/login" />} />
       <Route path="/planner" element={user ? <WeeklyPlanner /> : <Navigate to="/login" />} />
       <Route path="/filters" element={user ? <Filters /> : <Navigate to="/login" />} />
       <Route path="/settings" element={user ? <Settings /> : <Navigate to="/login" />} />
